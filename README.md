@@ -1,304 +1,169 @@
-# Optideliver - AI-Powered Delivery Optimization System
+# OptiDeliver: AI-Powered Delivery Optimization System
 
-## Introduction
-
-The **OptiDeliver** is a comprehensive solution designed to optimize the delivery routes, track deliveries, and provide an interface for senders to manage their shipments. The system consists of four main components:
-
-- **Sender Interface**: A web application for senders to create and manage delivery orders.
-- **Postman App**: An application for delivery personnel to view and update delivery statuses.
-- **Route Optimization Dashboard**: A dashboard for optimizing delivery routes and tracking delivery metrics.
-- **Backend API Server**: A Node.js/Express server that provides API endpoints for all the frontend components and integrates with the AI prediction service.
+OptiDeliver is an advanced delivery optimization system that leverages artificial intelligence to predict optimal delivery time slots, optimize routes, and improve overall delivery efficiency.
 
 ## Project Structure
 
-```markdown
-├── Dataset.csv
-├── Finale OptiDeliver_Infinitely Innovative_SIH-2024_final.pptx
-├── OptiDeliver-Phase2/
-│ ├── backend/
-│ │ ├── src/
-│ │ │ ├── config/
-│ │ │ ├── controllers/
-│ │ │ ├── middleware/
-│ │ │ ├── models/
-│ │ │ ├── routes/
-│ │ │ ├── utils/
-│ │ │ └── index.ts
-│ │ ├── .env
-│ │ ├── package.json
-│ │ └── tsconfig.json
-├── Postman-app/
-│ └── project/
-│ ├── .bolt/
-│ ├── .env
-│ ├── .gitignore
-│ ├── eslint.config.js
-│ ├── index.html
-│ └── src/
-├── prediction.ipynb
-├── prediction.py
-├── Route-optimization-dashboard/
-│ └── route/
-│ └── project/
-│ ├── .bolt/
-│ ├── .env
-│ ├── .gitignore
-│ ├── index.html
-│ └── src/
-├── Sender-interface/
-│ ├── .bolt/
-│ ├── .env
-│ ├── .gitignore
-│ ├── dashboard.js
-│ ├── eslint.config.js
-│ ├── index.html
-│ ├── package.json
-│ ├── postcss.config.js
-│ ├── public/
-│ ├── src/
-│ ├── styles.css
-│ ├── tailwind.config.js
-│ ├── tsconfig.app.json
-│ ├── tsconfig.json
-│ ├── tsconfig.node.json
-│ └── vite.config.ts
-└── Survey Responses.xlsx
+The project is organized into three main components:
+
+```
+OptiDeliver/
+├── ai-service/        # AI prediction model and datasets
+│   ├── Dataset.csv    # Training data for the AI model
+│   ├── prediction.py  # Python script for the prediction service
+│   └── prediction.ipynb # Jupyter notebook with model development
+├── backend/           # Node.js/Express backend server
+│   ├── src/           # Source code for the backend
+│   │   ├── config/    # Configuration files
+│   │   ├── controllers/ # Request handlers
+│   │   ├── middleware/ # Express middleware
+│   │   ├── models/    # Database models
+│   │   ├── routes/    # API routes
+│   │   ├── utils/     # Utility functions
+│   │   └── index.ts   # Main application entry point
+│   ├── .env           # Environment variables
+│   ├── package.json   # Dependencies
+│   └── tsconfig.json  # TypeScript configuration
+└── frontend/          # Web interfaces
+    ├── sender-interface/     # Interface for senders to create delivery orders
+    ├── postman-app/          # App for delivery personnel
+    └── route-dashboard/      # Management dashboard for route optimization
+
 ```
 
 ## Components
 
-### Sender Interface
+### 1. AI Prediction Service
 
-Located in [`Sender-interface`](Sender-interface), this React application allows senders to:
+The AI component uses machine learning to predict optimal delivery time slots based on various factors like distance, weather, traffic, and historical data. It achieves 92.7% accuracy using a Decision Tree Classifier.
 
-- Create new delivery orders.
-- Manage and track existing orders.
-- Receive notifications about delivery statuses.
+- **Location**: `ai-service/`
+- **Key Files**:
+  - `prediction.py`: Python script that can be run as a Flask API service
+  - `Dataset.csv`: Training data for the model
+  - `prediction.ipynb`: Development notebook with model exploration
 
-#### Features
+### 2. Backend API Server
 
-- User authentication and authorization.
-- Order creation with recipient details and delivery preferences.
-- Real-time tracking of deliveries.
+A Node.js/Express server that handles all business logic, database operations, and serves as an intermediary between the frontend applications and the AI service.
 
-### Postman App
+- **Location**: `backend/`
+- **Technology Stack**: TypeScript, Node.js, Express, MongoDB
+- **Features**:
+  - User authentication and management
+  - Order processing
+  - Delivery scheduling
+  - Integration with AI prediction service
+  - RESTful API endpoints
 
-Found in [`Postman-app/project`](Postman-app/project), this application enables delivery personnel to:
+### 3. Frontend Applications
 
-- View assigned deliveries.
-- Update delivery statuses (e.g., pending, in-progress, completed).
-- View optimized delivery routes on a map.
+#### Sender Interface
 
-#### Features
+- **Location**: `frontend/sender-interface/`
+- **Purpose**: Allows senders to create and track delivery orders
+- **Technology**: React.js
 
-- Interactive map display using Leaflet and React Leaflet.
-- Delivery metrics calculation (e.g., completed deliveries, distance covered).
-- Real-time updates and notifications.
+#### Postman App
 
-### Route Optimization Dashboard
+- **Location**: `frontend/postman-app/`
+- **Purpose**: Mobile application for delivery personnel showing optimized routes
+- **Technology**: React Native
 
-Located in [`Route-optimization-dashboard/route/project`](Route-optimization-dashboard/route/project), this dashboard provides:
+#### Route Optimization Dashboard
 
-- Visualization of delivery routes.
-- Optimization algorithms to calculate the most efficient delivery order.
-- Tracking of delivery progress and statuses.
+- **Location**: `frontend/route-dashboard/`
+- **Purpose**: Management dashboard for monitoring deliveries and optimizing routes
+- **Technology**: React.js, Leaflet maps
 
-#### Features
+## Getting Started
 
-- Map visualization with markers for delivery points.
-- Route optimization using custom utilities.
-- Integration with delivery tracking data.
+### AI Service Setup
 
-### Backend API Server
+1. Navigate to the AI service directory:
 
-Located in [`OptiDeliver-Phase2/backend`](OptiDeliver-Phase2/backend), this Node.js/Express server provides:
+   ```
+   cd ai-service
+   ```
 
-- RESTful API endpoints for all frontend components
-- User authentication and authorization
-- Database integration with MongoDB
-- Integration with the AI prediction service
+2. Install required Python packages:
 
-#### Features
+   ```
+   pip install flask flask-cors pandas scikit-learn numpy
+   ```
 
-- **User Management**: Registration, login, profile management with JWT authentication
-- **Order Management**: Create, read, update, and delete delivery orders
-- **Delivery Management**: Assign orders to delivery personnel, update delivery status
-- **Time Slot Prediction**: Integration with AI service to predict optimal delivery time slots
-- **Statistics and Analytics**: Delivery metrics and time slot efficiency data
+3. Run the AI prediction service:
+   ```
+   python prediction.py
+   ```
+   This will start the service at http://localhost:5001
 
-#### Backend Structure
+### Backend Setup
 
-- **Models**: MongoDB schemas for User, Order, and other data entities
-- **Routes**: API endpoints for users, orders, deliveries, and time slots
-- **Middleware**: Authentication and authorization middleware
-- **Utils**: Utility functions including AI service integration
-- **Config**: Database and environment configuration
+1. Navigate to the backend directory:
 
-### AI Prediction Service
+   ```
+   cd backend
+   ```
 
-Located in the root directory as `prediction.py` (converted from `prediction.ipynb`), this Python service:
+2. Install dependencies:
 
-- Analyzes delivery data to predict optimal time slots
-- Provides an API endpoint for the backend to request predictions
-- Achieves 92.7% accuracy in time slot prediction
+   ```
+   npm install
+   ```
 
-## Installation
+3. Configure environment variables:
 
-### Prerequisites
+   - Copy `.env.example` to `.env` (if not already present)
+   - Update MongoDB connection string and other settings
 
-- **Node.js** (version 14 or higher)
-- **npm** or **yarn**
-- **MongoDB** (local or Atlas)
-- **Python 3.8+** (for AI service)
+4. Run the backend server:
+   ```
+   npm run dev
+   ```
+   This will start the server at http://localhost:3000
 
-### Clone the Repository
+### Frontend Setup
 
-```bash
-git clone https://github.com/rishitsura/india-post-delivery-system.git
-```
+1. Navigate to the desired frontend application:
 
-## Installing Dependencies
+   ```
+   cd frontend/sender-interface
+   ```
 
-### Backend API Server
+2. Install dependencies:
 
-```bash
-cd OptiDeliver-Phase2/backend
-npm install
-```
+   ```
+   npm install
+   ```
 
-### Sender Interface
-
-```bash
-cd india-post-delivery-system/Sender-interface
-npm install
-```
-
-### Postman App
-
-```bash
-cd india-post-delivery-system/Postman-app/project
-npm install
-```
-
-### Route Optimization Dashboard
-
-```bash
-cd india-post-delivery-system/Route-optimization-dashboard/route/project
-npm install
-```
-
-### AI Prediction Service
-
-```bash
-pip install flask flask-cors pandas scikit-learn numpy
-```
-
-## Running the System
-
-### Backend API Server
-
-```bash
-cd OptiDeliver-Phase2/backend
-npm run dev
-```
-
-The backend server will run on http://localhost:5000
-
-### AI Prediction Service
-
-```bash
-python prediction.py
-```
-
-The AI service will run on http://localhost:5001
-
-### Frontend Applications
-
-Run each of the frontend applications according to their respective documentation.
-
-## API Endpoints
-
-### Authentication
-
-- `POST /api/users/register` - Register a new user
-- `POST /api/users/login` - Login a user
-- `GET /api/users/me` - Get current user profile
-- `PUT /api/users/me` - Update user profile
-- `PUT /api/users/change-password` - Change password
-
-### Orders
-
-- `GET /api/orders` - Get all orders (admin)
-- `GET /api/orders/my-orders` - Get user's orders
-- `GET /api/orders/:id` - Get a specific order
-- `POST /api/orders` - Create a new order
-- `PUT /api/orders/:id` - Update an order
-- `DELETE /api/orders/:id` - Delete an order
-
-### Deliveries
-
-- `GET /api/deliveries/personnel` - Get all delivery personnel (admin)
-- `GET /api/deliveries/my-route` - Get delivery person's current route
-- `PUT /api/deliveries/status/:orderId` - Update delivery status
-- `GET /api/deliveries/stats` - Get delivery statistics (admin)
-
-### Time Slots
-
-- `GET /api/timeslots/available` - Get available time slots
-- `GET /api/timeslots/distribution` - Get time slot distribution (admin)
-- `GET /api/timeslots/ai-health` - Check AI service health
-- `GET /api/timeslots/efficiency` - Get time slot efficiency metrics (admin)
+3. Start the application:
+   ```
+   npm start
+   ```
 
 ## System Architecture
 
-The OptiDeliver system follows a microservices architecture:
+OptiDeliver follows a microservices architecture with these data flows:
 
-1. **Frontend Applications**: Three separate React applications for different user roles
-2. **Backend API Server**: Node.js/Express server providing RESTful APIs
-3. **AI Prediction Service**: Python Flask service for time slot prediction
-4. **Database**: MongoDB for data persistence
+1. Sender creates a delivery order through the Sender Interface
+2. Backend validates the order and requests prediction from AI Service
+3. AI Service returns optimal delivery time slots
+4. Backend schedules the delivery and notifies delivery personnel
+5. Delivery personnel receive route information through the Postman App
+6. Managers monitor overall delivery status via the Route Optimization Dashboard
 
-Data flows through the system as follows:
+## API Documentation
 
-- Senders create delivery orders via the Sender Interface
-- The backend processes the order and requests a time slot prediction from the AI service
-- Delivery personnel receive assigned orders through the Postman App
-- Managers monitor deliveries and optimize routes via the Route Optimization Dashboard
+The backend API provides the following endpoints:
 
-## Usage
+- `/api/users` - User management
+- `/api/orders` - Order processing
+- `/api/deliveries` - Delivery management
+- `/api/time-slots` - Time slot management
 
-- Access the Sender Interface to create and manage delivery orders.
-- Use the Postman App to view assigned deliveries and update their statuses.
-- Utilize the Route Optimization Dashboard to visualize and optimize delivery routes.
-- The Backend API Server connects all components and provides data persistence.
-- The AI Prediction Service analyzes delivery data to suggest optimal time slots.
+For detailed API documentation, run the backend server and visit `/api-docs`.
 
-## Contributing
+## License
 
-We welcome contributions to improve the India Post Delivery System! Please follow these steps:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Contribution Guidelines
-
-- Follow the existing code style and conventions
-- Write clear commit messages
-- Update documentation as needed
-- Add tests for new features
-- Ensure all tests pass before submitting PR
-
-### Co-Owners
-
-### [Shruthika Sunku](https://github.com/shruthika-s)
-
-### [Suhas Uppala](https://github.com/Suhas-Uppala)
-
-### [Sujay Nimmagadda](https://github.com/sujaynsv)
-
-### [Yaswanth Jonnala](https://github.com/yaswanthjonnala)
-
-### [Amit Dandu](https://github.com/amitexe2)
+This project is licensed under the MIT License - see the LICENSE file for details.

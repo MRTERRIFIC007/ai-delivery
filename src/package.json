@@ -1,0 +1,43 @@
+{
+  "name": "optideliver",
+  "version": "1.0.0",
+  "description": "AI-Powered Delivery Optimization System",
+  "main": "index.js",
+  "scripts": {
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend/sender-interface && npm run dev",
+    "start:postman": "cd frontend/postman-app && npm run dev",
+    "start:dashboard": "cd frontend/route-dashboard && npm run dev",
+    "start:ai": "cd ai-service && npm run dev",
+    "install:all": "npm run install:backend && npm run install:frontend && npm run install:postman && npm run install:dashboard && npm run install:ai",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend/sender-interface && npm install",
+    "install:postman": "cd frontend/postman-app && npm install",
+    "install:dashboard": "cd frontend/route-dashboard && npm install",
+    "install:ai": "cd ai-service && npm install",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend/sender-interface && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/optideliver.git"
+  },
+  "keywords": [
+    "delivery",
+    "optimization",
+    "ai",
+    "logistics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/optideliver/issues"
+  },
+  "homepage": "https://github.com/yourusername/optideliver#readme",
+  "workspaces": [
+    "backend",
+    "frontend/*",
+    "ai-service"
+  ]
+}

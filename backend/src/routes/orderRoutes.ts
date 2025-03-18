@@ -1,6 +1,6 @@
 import express from "express";
 import { auth } from "../middleware/auth";
-import Order from "../models/Order";
+import Order, { OrderStatus } from "../models/Order";
 import { predictTimeSlot } from "../utils/aiService";
 
 const router = express.Router();
@@ -70,44 +70,90 @@ router.get("/:id", auth, async (req, res) => {
 router.post("/", auth, async (req, res) => {
   try {
     const {
-      recipientName,
-      recipientAddress,
+      receiverName,
+      receiverPhone,
+      receiverEmail,
+      pickupAddress,
+      dropoffAddress,
+      dropoffLatitude,
+      dropoffLongitude,
       packageWeight,
       packageDimensions,
-      deliveryDistance,
       deliveryPriority,
       notes,
     } = req.body;
 
-    // Use AI service to predict optimal time slot
+    // Prepare AI prediction data
     const predictionData = {
-      weight: packageWeight,
-      distance: deliveryDistance,
-      priority:
-        deliveryPriority === "high" ? 1 : deliveryPriority === "medium" ? 2 : 3,
+      customer_id: req.user.id,
+      day_of_week: new Date().getDay(),
+      location_type: req.body.addressType || "residential",
+      area_code: req.body.dropoffLatitude ? req.body.area || "110" : "110",
+      distance: 5.0, // Default value
+      order_value: packageWeight ? parseFloat(packageWeight) * 100 : 500, // Default value based on package weight
     };
 
     let predictedTimeSlot;
     try {
       const prediction = await predictTimeSlot(predictionData);
-      predictedTimeSlot = prediction.predictedTimeSlot;
+      // Get the first prediction with highest confidence
+      if (prediction.predictions && prediction.predictions.length > 0) {
+        // Sort by confidence (in case they aren't already sorted)
+        const sortedPredictions = [...prediction.predictions].sort(
+          (a, b) => b.confidence - a.confidence
+        );
+        predictedTimeSlot = sortedPredictions[0].time_slot;
+        console.log(
+          `Using AI predicted time slot: ${predictedTimeSlot} (${
+            sortedPredictions[0].confidence * 100
+          }% confidence)`
+        );
+      } else {
+        predictedTimeSlot = "10-11"; // Default to morning slot if no predictions
+        console.log(
+          "No predictions returned from AI service, using default time slot"
+        );
+      }
     } catch (error) {
       console.error("Error getting AI prediction:", error);
       // Default to a standard time slot if AI service fails
-      predictedTimeSlot = "afternoon";
+      predictedTimeSlot = "13-14"; // Afternoon slot
     }
 
     const newOrder = new Order({
       sender: req.user.id,
-      recipientName,
-      recipientAddress,
-      packageWeight,
-      packageDimensions,
-      deliveryDistance,
-      deliveryPriority,
+      recipient: {
+        name: receiverName,
+        phone: receiverPhone,
+        email: receiverEmail,
+      },
+      deliveryAddress: {
+        street: dropoffAddress,
+        city: req.body.city || "New Delhi",
+        state: req.body.state || "Delhi",
+        postalCode: req.body.postalCode || "110001",
+        country: "India",
+        location: {
+          latitude: parseFloat(dropoffLatitude || "17.4344"),
+          longitude: parseFloat(dropoffLongitude || "78.4672"),
+        },
+        addressType: req.body.addressType || 1,
+      },
+      packageDetails: {
+        weight: packageWeight || 1,
+        dimensions: {
+          length: packageDimensions?.length || 10,
+          width: packageDimensions?.width || 10,
+          height: packageDimensions?.height || 10,
+        },
+        description: req.body.description || "",
+      },
+      timeSlot: predictedTimeSlot,
       predictedTimeSlot,
+      deliveryDistance: req.body.deliveryDistance || 5.0,
+      deliveryPriority: deliveryPriority || "medium",
       notes,
-      status: "pending",
+      status: OrderStatus.PENDING,
     });
 
     const savedOrder = await newOrder.save();
@@ -151,10 +197,17 @@ router.put("/:id", auth, async (req, res) => {
     }
 
     // Update fields
-    if (recipientName) order.recipientName = recipientName;
-    if (recipientAddress) order.recipientAddress = recipientAddress;
-    if (packageWeight) order.packageWeight = packageWeight;
-    if (packageDimensions) order.packageDimensions = packageDimensions;
+    if (recipientName) order.recipient.name = recipientName;
+    if (recipientAddress) order.deliveryAddress.street = recipientAddress;
+    if (packageWeight) order.packageDetails.weight = packageWeight;
+    if (packageDimensions) {
+      order.packageDetails.dimensions.length =
+        packageDimensions.length || order.packageDetails.dimensions.length;
+      order.packageDetails.dimensions.width =
+        packageDimensions.width || order.packageDetails.dimensions.width;
+      order.packageDetails.dimensions.height =
+        packageDimensions.height || order.packageDetails.dimensions.height;
+    }
     if (deliveryDistance) order.deliveryDistance = deliveryDistance;
     if (deliveryPriority) order.deliveryPriority = deliveryPriority;
     if (notes) order.notes = notes;
@@ -168,7 +221,7 @@ router.put("/:id", auth, async (req, res) => {
       order.status = status;
 
       // If status is updated to 'delivered', set delivery completion time
-      if (status === "delivered") {
+      if (status === OrderStatus.DELIVERED) {
         order.deliveredAt = new Date();
       }
     }
@@ -198,7 +251,7 @@ router.put("/:id/assign", auth, async (req, res) => {
     }
 
     order.assignedTo = deliveryPersonId;
-    order.status = "assigned";
+    order.status = OrderStatus.ASSIGNED;
 
     const updatedOrder = await order.save();
     res.json(updatedOrder);

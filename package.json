@@ -1,0 +1,35 @@
+{
+  "name": "optideliver-root",
+  "version": "1.0.0",
+  "description": "AI-Powered Delivery Optimization System",
+  "main": "index.js",
+  "scripts": {
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend/sender-interface && npm run dev",
+    "start:postman": "cd frontend/postman-app && npm run dev",
+    "start:dashboard": "cd frontend/route-dashboard && npm run dev",
+    "start:ai-route": "cd ai-service && python3 route_optimization.py",
+    "start:ai-timeslot": "cd ai-service && python3 timeslot_prediction.py",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend/sender-interface && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\" \"npm run start:ai-timeslot\" \"npm run start:ai-route\"",
+    "test": "cd src && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/optideliver.git"
+  },
+  "keywords": [
+    "delivery",
+    "optimization",
+    "ai",
+    "logistics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/optideliver#readme",
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

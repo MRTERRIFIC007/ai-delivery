@@ -1,0 +1,91 @@
+name: OptiDeliver CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "./backend/package-lock.json"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Lint code
+        run: |
+          cd backend
+          npm run lint
+
+      - name: Run tests
+        run: |
+          cd backend
+          npm test
+        env:
+          MONGODB_URI: mongodb://localhost:27017/optideliver-test
+          JWT_SECRET: test-jwt-secret
+          NODE_ENV: test
+
+  ai-service-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          cd ai-service
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          cd ai-service
+          pytest
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install sender interface dependencies
+        run: |
+          cd frontend/sender-interface
+          npm ci
+
+      - name: Run sender interface tests
+        run: |
+          cd frontend/sender-interface
+          npm test

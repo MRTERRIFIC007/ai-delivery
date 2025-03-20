@@ -1,8 +1,11 @@
 import axios from "axios";
 
-// Create axios instance with default config
+const API_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:5001/api";
+const MAX_RETRIES = 2;
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_APP_API_URL || "http://localhost:5003",
+  baseURL: API_URL,
+  timeout: 10000, // Increase timeout to 10 seconds
   headers: {
     "Content-Type": "application/json",
   },
@@ -18,15 +21,14 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error("Request error:", error);
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor to handle common errors
+// Add response interceptor to handle auth errors
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
       // Unauthorized - redirect to login
@@ -37,6 +39,24 @@ api.interceptors.response.use(
   }
 );
 
+// Helper function to retry requests
+const retryRequest = async (
+  fn: () => Promise<any>,
+  retries = MAX_RETRIES
+): Promise<any> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Request failed, retrying... (${retries} attempts left)`);
+      // Wait 1 second before retrying
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return retryRequest(fn, retries - 1);
+    }
+    throw error;
+  }
+};
+
 // Define prediction API methods
 export const predictionAPI = {
   predictTimeSlot: async (data: {
@@ -45,11 +65,13 @@ export const predictionAPI = {
     longitude: number;
     addressType: string;
   }) => {
-    return api.post("/predict", data);
+    return retryRequest(() => api.post("/predictions/predict", data));
   },
 
   optimizeRoute: async (orders: any[]) => {
-    return api.post("/optimize-route", { orders });
+    return retryRequest(() =>
+      api.post("/predictions/optimize-route", { orders })
+    );
   },
 };
 

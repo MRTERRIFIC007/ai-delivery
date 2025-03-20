@@ -37,7 +37,7 @@ const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
   area = "default",
   date = new Date(),
   orderId,
-  isBulkMode = false
+  isBulkMode = false,
 }) => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [aiPredictions, setAIPredictions] = useState<AIPrediction[]>([]);
@@ -201,7 +201,7 @@ const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
     <div className="bg-white rounded-lg shadow">
       <div className="px-4 py-5 sm:px-6">
         <h2 className="text-lg font-semibold">
-          {isBulkMode ? 'Bulk Time Slot Selection' : 'Select Time Slot'}
+          {isBulkMode ? "Bulk Time Slot Selection" : "Select Time Slot"}
         </h2>
       </div>
       <div className="border-t border-gray-200">
@@ -212,23 +212,28 @@ const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
               onClick={() => handleSlotSelect(slot._id)}
               className={`p-4 rounded-lg border-2 transition-colors ${
                 selectedSlot === slot._id
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-300'
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Clock size={16} className="text-gray-400" />
                   <span className="font-medium text-gray-900">
-                    {format(new Date(slot.startTime), "h:mm a")} - {format(new Date(slot.endTime), "h:mm a")}
+                    {format(new Date(slot.startTime), "h:mm a")} -{" "}
+                    {format(new Date(slot.endTime), "h:mm a")}
                   </span>
                 </div>
                 {slot.aiConfidence && (
-                  <span className={`text-sm font-medium ${
-                    slot.aiConfidence > 0.8 ? 'text-green-600' :
-                    slot.aiConfidence > 0.6 ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
+                  <span
+                    className={`text-sm font-medium ${
+                      slot.aiConfidence > 0.8
+                        ? "text-green-600"
+                        : slot.aiConfidence > 0.6
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
                     {(slot.aiConfidence * 100).toFixed(1)}%
                   </span>
                 )}

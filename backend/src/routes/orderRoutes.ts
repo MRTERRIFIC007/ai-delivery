@@ -1,7 +1,13 @@
 import express from "express";
 import { auth } from "../middleware/auth";
 import Order, { OrderStatus } from "../models/Order";
-import { predictTimeSlot } from "../utils/aiService";
+import { predictTimeSlot, createOrderWithPrediction } from "../utils/aiService";
+import {
+  createOrder,
+  getOrderById,
+  getOrders,
+  deleteOrder,
+} from "../controllers/orderController";
 
 const router = express.Router();
 
@@ -66,101 +72,73 @@ router.get("/:id", auth, async (req, res) => {
   }
 });
 
-// Create a new order
-router.post("/", auth, async (req, res) => {
+// Create a new order with optimal time slot prediction
+router.post("/create-with-prediction", auth, async (req, res) => {
   try {
     const {
-      receiverName,
-      receiverPhone,
-      receiverEmail,
-      pickupAddress,
-      dropoffAddress,
-      dropoffLatitude,
-      dropoffLongitude,
-      packageWeight,
-      packageDimensions,
-      deliveryPriority,
-      notes,
+      customerId,
+      latitude,
+      longitude,
+      addressType,
+      itemType,
+      dayOfWeek,
+      deliveryDate,
     } = req.body;
 
-    // Prepare AI prediction data
-    const predictionData = {
-      customer_id: req.user.id,
-      day_of_week: new Date().getDay(),
-      location_type: req.body.addressType || "residential",
-      area_code: req.body.dropoffLatitude ? req.body.area || "110" : "110",
-      distance: 5.0, // Default value
-      order_value: packageWeight ? parseFloat(packageWeight) * 100 : 500, // Default value based on package weight
-    };
-
-    let predictedTimeSlot;
-    try {
-      const prediction = await predictTimeSlot(predictionData);
-      // Get the first prediction with highest confidence
-      if (prediction.predictions && prediction.predictions.length > 0) {
-        // Sort by confidence (in case they aren't already sorted)
-        const sortedPredictions = [...prediction.predictions].sort(
-          (a, b) => b.confidence - a.confidence
-        );
-        predictedTimeSlot = sortedPredictions[0].time_slot;
-        console.log(
-          `Using AI predicted time slot: ${predictedTimeSlot} (${
-            sortedPredictions[0].confidence * 100
-          }% confidence)`
-        );
-      } else {
-        predictedTimeSlot = "10-11"; // Default to morning slot if no predictions
-        console.log(
-          "No predictions returned from AI service, using default time slot"
-        );
-      }
-    } catch (error) {
-      console.error("Error getting AI prediction:", error);
-      // Default to a standard time slot if AI service fails
-      predictedTimeSlot = "13-14"; // Afternoon slot
+    // Validate required fields
+    if (!customerId || !latitude || !longitude || addressType === undefined) {
+      return res.status(400).json({
+        message:
+          "Missing required fields: customerId, latitude, longitude, addressType",
+      });
     }
 
-    const newOrder = new Order({
-      sender: req.user.id,
-      recipient: {
-        name: receiverName,
-        phone: receiverPhone,
-        email: receiverEmail,
-      },
-      deliveryAddress: {
-        street: dropoffAddress,
-        city: req.body.city || "New Delhi",
-        state: req.body.state || "Delhi",
-        postalCode: req.body.postalCode || "110001",
-        country: "India",
-        location: {
-          latitude: parseFloat(dropoffLatitude || "17.4344"),
-          longitude: parseFloat(dropoffLongitude || "78.4672"),
-        },
-        addressType: req.body.addressType || 1,
-      },
-      packageDetails: {
-        weight: packageWeight || 1,
-        dimensions: {
-          length: packageDimensions?.length || 10,
-          width: packageDimensions?.width || 10,
-          height: packageDimensions?.height || 10,
-        },
-        description: req.body.description || "",
-      },
-      timeSlot: predictedTimeSlot,
-      predictedTimeSlot,
-      deliveryDistance: req.body.deliveryDistance || 5.0,
-      deliveryPriority: deliveryPriority || "medium",
-      notes,
-      status: OrderStatus.PENDING,
+    // Call AI service to create order with prediction
+    const result = await createOrderWithPrediction({
+      customer_id: customerId,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      address_type: parseInt(addressType),
+      item_type: itemType || "REGULAR",
+      day_of_week: dayOfWeek || new Date().getDay(),
+      delivery_date: deliveryDate || null,
     });
 
-    const savedOrder = await newOrder.save();
-    res.status(201).json(savedOrder);
+    if (!result || !result.order) {
+      return res.status(500).json({
+        message: "Failed to create order with prediction",
+      });
+    }
+
+    // Return the created order with prediction
+    res.status(201).json({
+      success: true,
+      message: "Order created with optimal time slot prediction",
+      order: {
+        orderId: result.order.order_id,
+        customerId: result.order.customer_id,
+        postmanId: result.order.postman_id,
+        deliveryAddress: result.order.delivery_address,
+        coordinates: {
+          latitude: result.order.latitude,
+          longitude: result.order.longitude,
+        },
+        addressType: result.order.address_type,
+        itemType: result.order.item_type,
+        bookingDate: result.order.booking_date,
+        deliveryDate: result.order.delivery_date,
+        dayOfWeek: result.order.day_of_week,
+        predictedTimeSlot: result.order.predicted_time_slot,
+        confidence: result.order.confidence,
+        explanation: result.order.explanation,
+      },
+    });
   } catch (error) {
-    console.error("Error creating order:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error creating order with prediction:", error);
+    res.status(500).json({
+      message: "Failed to create order",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 });
 

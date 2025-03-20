@@ -27,18 +27,43 @@ app.use(express.urlencoded({ extended: true }));
 // MongoDB Connection
 const connectDB = async () => {
   try {
-    if (!process.env.MONGODB_URI) {
-      console.log(
-        "No MongoDB URI provided. Starting server without database connection for development"
-      );
+    const mongoURI = process.env.MONGODB_URI;
+
+    if (!mongoURI) {
+      console.error("MongoDB URI is not defined in environment variables");
+      console.error("Set MONGODB_URI in your .env file");
+      console.error("Falling back to mock data for development");
       return;
     }
 
-    console.log("Attempting to connect to MongoDB...");
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    console.log("Connecting to MongoDB...");
+
+    await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+      connectTimeoutMS: 10000, // 10 seconds connection timeout
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+
+    // Log when connection is established
+    mongoose.connection.on("connected", () => {
+      console.log(`MongoDB Connected: ${mongoose.connection.host}`);
+    });
+
+    // Log when connection is closed
+    mongoose.connection.on("disconnected", () => {
+      console.log("MongoDB disconnected");
+    });
+
+    // Log connection errors
+    mongoose.connection.on("error", (err) => {
+      console.error("MongoDB connection error:", err);
+    });
+
+    // Handle application termination - close connection gracefully
+    process.on("SIGINT", async () => {
+      await mongoose.connection.close();
+      console.log("MongoDB connection closed due to app termination");
+      process.exit(0);
+    });
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
     console.log("Starting server without database connection for development");
